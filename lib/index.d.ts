@@ -887,6 +887,8 @@ export interface CanvasRenderingContext2D extends CanvasCompositing, CanvasDrawI
    *  inheriting all its axis values except for those overridden in `fontVariationSettings`. Resets to `"auto"`
    *  whenever a new `ctx.font` value is assigned. */
   fontInstance: string
+  /** Dither gradient fills & strokes to reduce banding, as browsers do (defaults to `false`) */
+  gradientDithering: boolean
   fontHinting: boolean
   fontSmoothing: boolean
   fontSynthesis: boolean

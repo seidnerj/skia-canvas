@@ -205,6 +205,8 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
   cx.export_function("CanvasRenderingContext2D_drawCanvas", ctx::drawCanvas)?;
   cx.export_function("CanvasRenderingContext2D_getImageData", ctx::getImageData)?;
   cx.export_function("CanvasRenderingContext2D_putImageData", ctx::putImageData)?;
+  cx.export_function("CanvasRenderingContext2D_get_gradientDithering", ctx::get_gradientDithering)?;
+  cx.export_function("CanvasRenderingContext2D_set_gradientDithering", ctx::set_gradientDithering)?;
   cx.export_function("CanvasRenderingContext2D_get_imageSmoothingEnabled", ctx::get_imageSmoothingEnabled)?;
   cx.export_function("CanvasRenderingContext2D_set_imageSmoothingEnabled", ctx::set_imageSmoothingEnabled)?;
   cx.export_function("CanvasRenderingContext2D_get_imageSmoothingQuality", ctx::get_imageSmoothingQuality)?;
