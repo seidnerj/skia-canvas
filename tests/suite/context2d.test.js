@@ -538,6 +538,41 @@ describe("Context2D", ()=>{
         assert.deepEqual(pixel(256, 5), BLACK)
       })
 
+      test("dithering", () => {
+        // a shallow ramp spreads 17 levels over 256px, so undithered rows are identical bands
+        let render = () => {
+          let g = ctx.createLinearGradient(0, 0, 256, 0)
+          g.addColorStop(0, '#000')
+          g.addColorStop(1, '#111')
+          ctx.fillStyle = g
+          ctx.fillRect(0, 0, 256, 8)
+          let rows = Array.from({length:8}, (_, y) => Array.from(ctx.getImageData(0, y, 256, 1).data).join())
+          return new Set(rows).size
+        }
+
+        // boolean property, off by default
+        assert.equal(ctx.gradientDithering, false)
+        assert.equal(render(), 1)
+
+        // dithering varies the pattern from row to row
+        ctx.gradientDithering = true
+        assert.equal(ctx.gradientDithering, true)
+        assert(render() > 1)
+
+        // truthy coercion, and the setting is part of the save/restore state
+        ctx.save()
+        // @ts-expect-error — deliberately mistyped: exercises truthy coercion
+        ctx.gradientDithering = 0
+        assert.equal(ctx.gradientDithering, false)
+        ctx.restore()
+        assert.equal(ctx.gradientDithering, true)
+
+        // solid colors are never dithered
+        ctx.fillStyle = '#080808'
+        ctx.fillRect(0, 0, 256, 8)
+        assert.deepEqual(new Set(Array.from(ctx.getImageData(0, 0, 256, 8).data)), new Set([8, 255]))
+      })
+
       test("interpolation", () => {
         // render a red→blue ramp and sample its midpoint under different interpolation settings
         let midpoint = configure => {
