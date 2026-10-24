@@ -893,6 +893,8 @@ export interface CanvasRenderingContext2D extends CanvasCompositing, CanvasDrawI
   /** `true` for greyscale antialiasing (the default), `false` for none, or `"subpixel"` to request subpixel antialiasing */
   fontSmoothing: boolean | "subpixel"
   fontSynthesis: boolean
+  /** Blur the shadows of paths & text as a coverage mask in device space (as browsers do) rather than as an image filter */
+  shadowMaskFilter: boolean
   textWrap: boolean
   textDecoration: TextDecorationSetting
   lineDashMarker: Path2D | null
