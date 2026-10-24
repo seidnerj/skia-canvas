@@ -65,6 +65,26 @@ describe("Context2D", ()=>{
       ctx.font = 'invalid'
       assert.equal(ctx.font, canonical)
 
+      // default values are omitted and families serialized the way browsers report them
+      _each({
+        'normal 400 12px Arial': '12px Arial',
+        '700 12px Arial': 'bold 12px Arial',
+        'oblique 12px Arial': 'italic 12px Arial',
+        'italic small-caps 600 12px Arial': 'italic 600 small-caps 12px Arial',
+        '16pt Arial': '21.3333px Arial',
+        "12px Times New Roman, 'Helvetica Neue',SANS-SERIF": '12px "Times New Roman", "Helvetica Neue", sans-serif',
+        "12px 'serif', '1Font', a_b-c": '12px "serif", "1Font", a_b-c',
+      }, (expected, font) => {
+        ctx.font = font
+        assert.equal(ctx.font, expected)
+      })
+
+      // components browsers drop are kept so the value can be assigned back
+      for (let font of ['oblique 10deg 12px Arial', 'condensed 12px Arial', '12px/20px Arial']){
+        ctx.font = font
+        assert.equal(ctx.font, font)
+      }
+
       // re-assigning `font` to the value it already reports is a no-op — the implicit default must
       // resolve the same metrics as an explicit assignment (fresh ctx so no font was ever set)
       let dctx = new Canvas(WIDTH, HEIGHT).getContext('2d')
