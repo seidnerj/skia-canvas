@@ -77,3 +77,6 @@ drm = { version = "0.15", optional = true }
 objc2-core-foundation = { version = "0.3", optional = true, default-features = false, features = ["std", "CFCGTypes"] }
 objc2-core-video = { version = "0.3", optional = true, default-features = false, features = ["std", "CVBase", "CVReturn", "CVDisplayLink", "objc2-core-graphics"] }
 objc2-core-graphics = { version = "0.3", optional = true, default-features = false, features = ["std", "CGColorSpace"] }
+
+[patch.crates-io]
+skia-bindings = { path = "../skia-bindings-local" }
