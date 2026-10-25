@@ -209,8 +209,13 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
   cx.export_function("CanvasRenderingContext2D_set_gradientDithering", ctx::set_gradientDithering)?;
   cx.export_function("CanvasRenderingContext2D_get_imageSmoothingEnabled", ctx::get_imageSmoothingEnabled)?;
   cx.export_function("CanvasRenderingContext2D_set_imageSmoothingEnabled", ctx::set_imageSmoothingEnabled)?;
+<<<<<<< HEAD
   cx.export_function("CanvasRenderingContext2D_get_arcPaintOp", ctx::get_arcPaintOp)?;
   cx.export_function("CanvasRenderingContext2D_set_arcPaintOp", ctx::set_arcPaintOp)?;
+=======
+  cx.export_function("CanvasRenderingContext2D_get_ellipseTransform", ctx::get_ellipseTransform)?;
+  cx.export_function("CanvasRenderingContext2D_set_ellipseTransform", ctx::set_ellipseTransform)?;
+>>>>>>> opt/ellipse-transform
   cx.export_function("CanvasRenderingContext2D_get_imageSmoothingQuality", ctx::get_imageSmoothingQuality)?;
   cx.export_function("CanvasRenderingContext2D_set_imageSmoothingQuality", ctx::set_imageSmoothingQuality)?;
 
