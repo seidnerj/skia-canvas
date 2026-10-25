@@ -702,13 +702,10 @@ interface CanvasImageData {
 interface CanvasImageSmoothing {
   /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/imageSmoothingEnabled) */
   imageSmoothingEnabled: boolean;
-<<<<<<< HEAD
   /** Draw an arc() on an empty path with drawArc, as Blink does (default false) */
   arcPaintOp: boolean;
-=======
   /** Build a rotated ellipse() the way Blink does, unrotated at the origin then transformed (default false) */
   ellipseTransform: boolean;
->>>>>>> opt/ellipse-transform
   /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/imageSmoothingQuality) */
   imageSmoothingQuality: ImageSmoothingQuality;
 }

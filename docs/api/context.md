@@ -151,15 +151,13 @@ The `.textRendering` setting controls what the renderer prioritizes when convert
 
 ![rasterization differences depending on textRendering mode](../assets/text-rendering.svg)
 
-<<<<<<< HEAD
 ### `.arcPaintOp`
 
 Browsers record an `arc()` drawn on an empty path as a dedicated arc operation and rasterize it with Skia's `drawArc` (or `drawOval` for a closed full circle) rather than as general path geometry, which gives slightly different edge pixels. Set `.arcPaintOp` to `true` to do the same when the current path holds only that one arc (radius of at least 1, no transform change before filling or stroking). It defaults to `false` and is saved and restored with the rest of the context's state.
-=======
+
 ### `.ellipseTransform`
 
 Browsers build an `ellipse()` with a non-zero rotation by adding the unrotated arc at the origin and then translating and rotating it into place, which rounds the curve's points slightly differently from rotating the arc about its center. Set `.ellipseTransform` to `true` to build rotated ellipses the same way. It defaults to `false` and is saved and restored with the rest of the context's state.
->>>>>>> opt/ellipse-transform
 
 ### `.textWrap`
 

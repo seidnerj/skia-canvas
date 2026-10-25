@@ -593,7 +593,6 @@ pub fn putImageData(mut cx: FunctionContext) -> JsResult<JsUndefined> {
   Ok(cx.undefined())
 }
 
-<<<<<<< HEAD
 // -- non-standard color extensions -------------------------------------------------
 
 pub fn get_gradientDithering(mut cx: FunctionContext) -> JsResult<JsBoolean> {
@@ -620,7 +619,9 @@ pub fn set_arcPaintOp(mut cx: FunctionContext) -> JsResult<JsUndefined> {
   let this = cx.argument::<BoxedContext2D>(0)?;
   let mut this = this.borrow_mut();
   this.state.arc_paint_op = bool_arg(&mut cx, 1, "arcPaintOp")?;
-=======
+  Ok(cx.undefined())
+}
+
 pub fn get_ellipseTransform(mut cx: FunctionContext) -> JsResult<JsBoolean> {
   let this = cx.argument::<BoxedContext2D>(0)?;
   let this = this.borrow_mut();
@@ -631,7 +632,6 @@ pub fn set_ellipseTransform(mut cx: FunctionContext) -> JsResult<JsUndefined> {
   let this = cx.argument::<BoxedContext2D>(0)?;
   let mut this = this.borrow_mut();
   this.state.ellipse_transform = bool_arg(&mut cx, 1, "ellipseTransform")?;
->>>>>>> opt/ellipse-transform
   Ok(cx.undefined())
 }
 
