@@ -896,6 +896,7 @@ export interface CanvasRenderingContext2D extends CanvasCompositing, CanvasDrawI
   /** Dither gradient fills & strokes to reduce banding, as browsers do (defaults to `false`) */
   gradientDithering: boolean
   fontHinting: boolean
+  browserGlyphBounds: boolean
   /** `true` for greyscale antialiasing (the default), `false` for none, or `"subpixel"` to request subpixel antialiasing */
   fontSmoothing: boolean | "subpixel"
   fontSynthesis: boolean

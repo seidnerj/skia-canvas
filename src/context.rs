@@ -78,6 +78,7 @@ pub struct State{
   font_smoothing: bool,
   font_subpixel: bool,
   font_synthesis: bool,
+  pub browser_glyph_bounds: bool,
   char_style: TextStyle,
   graf_style: ParagraphStyle,
   text_baseline: Baseline,
@@ -144,6 +145,7 @@ impl Default for State {
       font_smoothing: true,
       font_subpixel: false,
       font_synthesis: true,
+      browser_glyph_bounds: false,
       char_style,
       graf_style,
       text_rendering: TextRendering::Auto,
@@ -244,7 +246,7 @@ impl State{
       self.graf_style.text_direction() as i32,
       self.text_wrap,
       self.line_height.map(f32::to_bits),
-      (self.font_hinting, self.font_smoothing, self.font_subpixel, self.font_synthesis, self.text_rendering),
+      (self.font_hinting, self.font_smoothing, self.font_subpixel, self.font_synthesis, self.text_rendering, self.browser_glyph_bounds),
     ).hash(&mut h);
 
     (h.finish(), text.to_string(), width.map(f32::to_bits))
