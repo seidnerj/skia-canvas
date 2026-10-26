@@ -701,6 +701,7 @@ interface CanvasImageSmoothing {
   imageSmoothingEnabled: boolean;
   /** Draw an arc() on an empty path with drawArc, as Blink does (default false) */
   arcPaintOp: boolean;
+  rectPaintOp: boolean;
   /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/imageSmoothingQuality) */
   imageSmoothingQuality: ImageSmoothingQuality;
 }
