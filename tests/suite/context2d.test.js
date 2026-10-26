@@ -300,6 +300,8 @@ describe("Context2D", ()=>{
       let cpu = draw(false),
           gpu = draw(true)
       if (!gpu.gpu) return // no GPU available to compare against
+      // Graphite unpremultiplies on the GPU the way Chrome's GPU canvas does, which rounds differently from the CPU
+      if (gpu.engine.graphite) return
 
       let pixels = canvas => Array.from(canvas.getContext('2d').getImageData(0, 0, 256, 1).data)
       assert.deepEqual(pixels(gpu), pixels(cpu))

@@ -1,7 +1,6 @@
 #![allow(clippy::upper_case_acronyms)]
 use skia_safe::{gpu::DirectContext, ImageInfo, Surface};
-#[cfg(feature = "window")]
-use skia_safe::Image; // RenderOutcome carries a snapshot destined for the Frame cache
+use skia_safe::Image;
 use serde_json::{json, Value};
 use crate::gfx::{self, page::ExportOptions, cache::Cache};
 
@@ -114,6 +113,25 @@ impl RenderingEngine{
 pub enum RenderOutcome {
     Skipped, // surface wasn't available in time so couldn't redraw
     Rendered(Option<Image>), // succeded (including snapshot if requested)
+}
+
+// read a GPU (or CPU) surface's pixels; Graphite surfaces must flush their recording through the context first
+pub fn read_surface(surface:&mut Surface, info:&ImageInfo, pixels:&mut [u8], src:(i32, i32)) -> bool {
+    #[cfg(feature = "graphite")]
+    if surface.recording_context().is_none() && surface.direct_context().is_none() && surface.peek_pixels().is_none() {
+        return crate::gfx::metal::offscreen::MetalEngine::read_surface(surface, info, pixels, src)
+    }
+    surface.read_pixels(info, pixels, info.min_row_bytes(), src)
+}
+
+// a raster copy of a surface's contents (for encoding off the render thread)
+pub fn raster_snapshot(surface:&mut Surface) -> Option<Image> {
+    // read unpremultiplied so the GPU does the conversion, as Chrome's canvas encoder readback does
+    // (the CPU unpremultiply rounds some low-alpha channels one step differently)
+    let info = surface.image_info().with_alpha_type(skia_safe::AlphaType::Unpremul);
+    let mut pixels = vec![0u8; info.compute_min_byte_size()];
+    read_surface(surface, &info, &mut pixels, (0, 0)).then_some(())?;
+    skia_safe::images::raster_from_data(&info, skia_safe::Data::new_copy(&pixels), info.min_row_bytes())
 }
 
 // the single thread that serializes jobs bound for the GPU (and its one, shared Context)

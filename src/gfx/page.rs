@@ -644,7 +644,15 @@ impl Page{
             surface.canvas().draw_color(color, BlendMode::DstOver);
           }
 
-          // extract the results
+          // extract the results (Graphite surfaces have no DirectContext, so read them back to a raster)
+          #[cfg(feature = "graphite")]
+          let image = match surface.direct_context(){
+            None if surface.peek_pixels().is_none() => crate::gfx::engine::raster_snapshot(&mut surface),
+            _ => None,
+          }.or_else(|| surface.make_temporary_image())
+            .or_else(|| surface.image_snapshot_with_bounds(img_info.bounds()))
+            .ok_or("Could not read canvas contents (GPU context lost)".to_string())?;
+          #[cfg(not(feature = "graphite"))]
           let image = surface.make_temporary_image()
             .or_else(|| surface.image_snapshot_with_bounds(img_info.bounds()))
             .ok_or("Could not read canvas contents (GPU context lost)".to_string())?;

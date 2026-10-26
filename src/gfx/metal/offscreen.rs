@@ -43,6 +43,7 @@ impl MetalEngine {
                 let status = json!({
                     "renderer": "GPU",
                     "api": "Metal",
+                    "graphite": cfg!(feature = "graphite"),
                     "device": device_name,
                     "msaa": context.msaa,
                     "threads": rayon::current_num_threads(),
@@ -117,11 +118,64 @@ impl MetalEngine {
     pub fn with_cleanup<T>(f: impl FnOnce() -> T) -> T {
         autoreleasepool(|_| f())
     }
+
+    // read a gpu surface's pixels: Ganesh surfaces read directly, Graphite ones flush their recording first
+    pub fn read_surface(surface:&mut Surface, info:&ImageInfo, pixels:&mut [u8], src:(i32, i32)) -> bool {
+        #[cfg(feature = "graphite")]
+        if let Ok(read) = Self::with_context(|ctx| Ok(ctx.graphite.read(surface, info, pixels, src))) {
+            return read
+        }
+        surface.read_pixels(info, pixels, info.min_row_bytes(), src)
+    }
+}
+
+// Chrome's GPU canvas draws with Skia Graphite (on Dawn over Metal); its path, arc and blur rasterization
+// differs from Ganesh's, so with the `graphite` feature offscreen surfaces come from a Graphite recorder
+#[cfg(feature = "graphite")]
+pub struct GraphiteContext {
+    context: skia_safe::gpu::graphite::Context,
+    recorder: skia_safe::gpu::graphite::Recorder,
+}
+
+#[cfg(feature = "graphite")]
+impl GraphiteContext {
+    fn new(device:&ProtocolObject<dyn MTLDevice>) -> Option<Self> {
+        use skia_safe::gpu::graphite::mtl as gmtl;
+        // Chrome's Dawn device lacks ShaderF16, so its shaders run at full precision; the fork's
+        // Metal SkSL backend matches that (half -> float, f32 uniforms) when SK_MTL_F32 is set
+        if std::env::var_os("SK_MTL_F32").is_none() {
+            unsafe { std::env::set_var("SK_MTL_F32", "1") };
+        }
+        let queue = device.newCommandQueue()?;
+        let backend = unsafe { gmtl::BackendContext::new(
+            std::ptr::from_ref(device) as gmtl::Handle,
+            Retained::as_ptr(&queue) as gmtl::Handle,
+        ) };
+        let mut context = gmtl::context_factory::make_metal(&backend, None)?;
+        let recorder = context.make_recorder(None)?;
+        Some(Self{ context, recorder })
+    }
+
+    fn surface(&mut self, image_info:&ImageInfo, opts:&ExportOptions) -> Option<Surface> {
+        skia_safe::gpu::graphite::surfaces::render_target(
+            &mut self.recorder, image_info, skia_safe::gpu::Mipmapped::No, Some(&opts.surface_props()), None
+        )
+    }
+
+    fn read(&mut self, surface:&mut Surface, info:&ImageInfo, pixels:&mut [u8], src:(i32, i32)) -> bool {
+        if let Some(mut recording) = self.recorder.snap() {
+            self.context.insert_recording(&skia_safe::gpu::graphite::InsertRecordingInfo::new(&mut recording));
+        }
+        self.context.submit_and_wait();
+        self.context.read_pixels(surface, info, pixels, info.min_row_bytes(), src)
+    }
 }
 
 pub struct MetalContext {
     device: Retained<ProtocolObject<dyn MTLDevice>>,
     context: DirectContext,
+    #[cfg(feature = "graphite")]
+    graphite: GraphiteContext,
     msaa: Vec<usize>,
     last_use: Instant,
 }
@@ -134,14 +188,25 @@ impl MetalContext{
                 let msaa:Vec<usize> = [0,2,4,8].into_iter().filter(|s|{
                     *s==0 || device.supportsTextureSampleCount(*s as _)
                 }).collect();
+                #[cfg(feature = "graphite")]
+                let graphite = GraphiteContext::new(&device)?;
                 make_direct_context(&device)
-                    .map(|(_queue, context)| MetalContext{device, context, msaa, last_use})
+                    .map(|(_queue, context)| MetalContext{
+                        device, context, msaa, last_use,
+                        #[cfg(feature = "graphite")] graphite,
+                    })
             })
         })
     }
 
-    fn surface(&mut self, image_info: &ImageInfo, opts:&ExportOptions, budgeted:bool) -> Result<Surface, String> {
+    fn surface(&mut self, image_info: &ImageInfo, opts:&ExportOptions, #[allow(unused_variables)] budgeted:bool) -> Result<Surface, String> {
         self.last_use = Instant::now();
+        #[cfg(feature = "graphite")]
+        { // Graphite manages its own budget and sample count
+            return self.graphite.surface(image_info, opts).ok_or(
+                format!("Could not allocate new {}×{} bitmap", image_info.width(), image_info.height())
+            )
+        }
         surfaces::render_target(
             &mut self.context,
             if budgeted { Budgeted::Yes } else { Budgeted::No },

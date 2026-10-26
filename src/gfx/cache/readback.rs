@@ -80,8 +80,9 @@ impl ReadbackSurface{
 
     // GPU backends unpremultiply in a shader whose rounding differs from the CPU conversion, so
     // read premultiplied pixels and convert them below to get the same bytes on either engine
-    let unpremul_on_gpu = gpu && dst_info.alpha_type() == AlphaType::Unpremul;
-    if !unpremul_on_gpu && surface.read_pixels(dst_info, pixels, dst_info.min_row_bytes(), (src.x(), src.y())){
+    // (Graphite's own unpremultiplying readback is the one Chrome uses, so it reads unpremul directly)
+    let unpremul_on_gpu = gpu && dst_info.alpha_type() == AlphaType::Unpremul && !cfg!(feature = "graphite");
+    if !unpremul_on_gpu && crate::gfx::engine::read_surface(surface, dst_info, pixels, (src.x(), src.y())){
       return true
     }
 
@@ -90,7 +91,7 @@ impl ReadbackSurface{
     let mut staged = dst_info.with_color_type(ColorType::RGBA8888);
     if unpremul_on_gpu { staged = staged.with_alpha_type(AlphaType::Premul) }
     let mut rgba = vec![0u8; staged.compute_min_byte_size()];
-    if !surface.read_pixels(&staged, &mut rgba, staged.min_row_bytes(), (src.x(), src.y())){
+    if !crate::gfx::engine::read_surface(surface, &staged, &mut rgba, (src.x(), src.y())){
       return false
     }
 

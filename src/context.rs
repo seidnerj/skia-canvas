@@ -42,6 +42,8 @@ pub struct Context2D{
   path: Path2D,
   // a lone arc() on an empty path, kept so fill/stroke can draw it with drawArc like Blink does
   lone_arc: Option<LoneArc>,
+  // the rect passed to fillRect/strokeRect, drawn with drawRect like Blink does when rect_paint_op is set
+  paint_rect: Option<Rect>,
 }
 
 #[derive(Clone)]
@@ -66,6 +68,7 @@ pub struct State{
   shadow_offset: Point,
   shadow_mask_filter: bool,
   arc_paint_op: bool,
+  rect_paint_op: bool,
 
   stroke_width: f32,
   line_dash_offset: f32,
@@ -147,6 +150,7 @@ impl Default for State {
       shadow_offset: (0.0, 0.0).into(),
       shadow_mask_filter: false,
       arc_paint_op: false,
+      rect_paint_op: false,
 
       font,
       font_variant,
@@ -294,6 +298,7 @@ impl Context2D{
       recorder: RefCell::new(PageRecorder::new(bounds, color_space, props)),
       path: Path2D::default(),
       lone_arc: None,
+      paint_rect: None,
       stack: vec![],
       state: State::default(),
     }
@@ -486,6 +491,7 @@ impl Context2D{
       (None, Some(arc)) if self.state.arc_paint_op && arc.matrix == self.state.matrix => Some(arc.clone()),
       _ => None,
     };
+    let paint_rect = self.paint_rect.take().filter(|_| self.state.rect_paint_op);
     let mut path = path.unwrap_or_else(|| {
       // the current path has already incorporated its transform state
       let inverse = self.state.matrix.invert().unwrap_or_default();
@@ -553,6 +559,9 @@ impl Context2D{
             canvas.draw_path(&fill_path, &fill_paint);
           }
         }
+      }else if let Some(rect) = paint_rect{
+        // Blink records fillRect/strokeRect as a DrawRectOp, so Skia takes its rect paths (e.g. analytic blurs)
+        canvas.draw_rect(rect, paint);
       }else if let Some(arc) = &lone_arc{
         // Blink's DrawArcImpl: open arcs use drawArc, closed full circles drawOval, closed partial arcs a closed path
         if !arc.closed {
@@ -1060,8 +1069,8 @@ impl Plotter for Context2D {
   fn reset_transform(&mut self){              self.with_matrix(|ctm| ctm.reset()); }
   fn fill(&mut self, rule:PathFillType){      self.draw_path(None, PaintStyle::Fill, Some(rule)); }
   fn stroke(&mut self){                       self.draw_path(None, PaintStyle::Stroke, None); }
-  fn fill_rect(&mut self, rect:Rect){         self.draw_path(Some(Path::rect(rect, None)), PaintStyle::Fill, None); }
-  fn stroke_rect(&mut self, rect:Rect){       self.draw_path(Some(Path::rect(rect, None)), PaintStyle::Stroke, None); }
+  fn fill_rect(&mut self, rect:Rect){         self.paint_rect = Some(rect); self.draw_path(Some(Path::rect(rect, None)), PaintStyle::Fill, None); }
+  fn stroke_rect(&mut self, rect:Rect){       self.paint_rect = Some(rect); self.draw_path(Some(Path::rect(rect, None)), PaintStyle::Stroke, None); }
   fn clear_rect(&mut self, rect:Rect){        Context2D::clear_rect(self, &rect); }
 }
 

@@ -704,6 +704,8 @@ interface CanvasImageSmoothing {
   imageSmoothingEnabled: boolean;
   /** Draw an arc() on an empty path with drawArc, as Blink does (default false) */
   arcPaintOp: boolean;
+  /** Draw fillRect()/strokeRect() with drawRect, as Blink does (default false) */
+  rectPaintOp: boolean;
   /** Build a rotated ellipse() the way Blink does, unrotated at the origin then transformed (default false) */
   ellipseTransform: boolean;
   /** [MDN Reference](https://developer.mozilla.org/docs/Web/API/CanvasRenderingContext2D/imageSmoothingQuality) */

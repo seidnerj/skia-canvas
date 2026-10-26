@@ -1,7 +1,10 @@
-# Build Skia from a local source tree (../skia-src) instead of rust-skia's prebuilt binaries, so Skia patches
+# Build Skia from a local source tree (../skia-m156) instead of rust-skia's prebuilt binaries, so Skia patches
 # apply (HarfBuzz ptem for AAT trak tracking, as Blink's harfbuzz_face.cc does). ../skia-bindings-local is
 # skia-bindings 0.153.3 with a bindgen blocklist for a libc++ alias newer Xcode headers break on.
+# ../skia-m156 is Skia m156 (Chrome 156's milestone; branch mtl-f32) with the ptem patch and SK_MTL_F32
+# (full-precision Graphite Metal shaders, as Chrome's Dawn device runs them). ../skia-safe-local is
+# skia-safe 0.153.3 + vendor/skia-safe-0.153.3-m156.patch (m156 widened Path::getGenerationID to u64).
 [env]
-SKIA_SOURCE_DIR = { value = "../skia-src", relative = true }
-SKIA_GN_COMMAND = { value = "../skia-src/bin/gn", relative = true }
+SKIA_SOURCE_DIR = { value = "../skia-m156", relative = true }
+SKIA_GN_COMMAND = { value = "../skia-m156/bin/gn", relative = true }
 SKIA_NINJA_COMMAND = "ninja"
