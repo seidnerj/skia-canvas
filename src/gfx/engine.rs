@@ -119,7 +119,27 @@ pub enum RenderOutcome {
 pub fn read_surface(surface:&mut Surface, info:&ImageInfo, pixels:&mut [u8], src:(i32, i32)) -> bool {
     #[cfg(feature = "graphite")]
     if surface.recording_context().is_none() && surface.direct_context().is_none() && surface.peek_pixels().is_none() {
-        return crate::gfx::metal::offscreen::MetalEngine::read_surface(surface, info, pixels, src)
+        // Graphite refuses reads that extend past the surface (Ganesh and raster clip them), so read
+        // the overlapping region and place it in the buffer, leaving the rest zero
+        let full = skia_safe::IRect::from_xywh(src.0, src.1, info.width(), info.height());
+        let Some(clip) = skia_safe::IRect::intersect(&full, &skia_safe::IRect::from_size(surface.image_info().dimensions())) else {
+            return true
+        };
+        if clip == full {
+            return crate::gfx::metal::offscreen::MetalEngine::read_surface(surface, info, pixels, src)
+        }
+        let part = info.with_dimensions(clip.size());
+        let mut buf = vec![0u8; part.compute_min_byte_size()];
+        if !crate::gfx::metal::offscreen::MetalEngine::read_surface(surface, &part, &mut buf, (clip.x(), clip.y())) {
+            return false
+        }
+        let (bpp, row, prow) = (info.bytes_per_pixel(), info.min_row_bytes(), part.min_row_bytes());
+        let (dx, dy) = ((clip.x() - src.0) as usize, (clip.y() - src.1) as usize);
+        for y in 0..clip.height() as usize {
+            let at = (dy + y) * row + dx * bpp;
+            pixels[at..at + prow].copy_from_slice(&buf[y * prow..(y + 1) * prow]);
+        }
+        return true
     }
     surface.read_pixels(info, pixels, info.min_row_bytes(), src)
 }

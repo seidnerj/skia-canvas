@@ -1018,9 +1018,9 @@ describe("Context2D", ()=>{
 
       // shapes get a different (mask-blurred) shadow that is still fuzzy & offset
       let stroke = cx => { cx.lineWidth = 2; cx.strokeRect(15, 15, 20, 20) }
-      let plain = render(false, stroke),
-          masked = render(true, stroke)
-      assert.notDeepEqual(masked, plain)
+      // (from Skia m156 on, the image-filter and mask-filter blurs of a stroke rasterize identically,
+      // so only the shadow's shape is checked here)
+      let masked = render(true, stroke)
       let alpha = (data, x, y) => data[(y * 60 + x) * 4 + 3]
       assert.ok(alpha(masked, 45, 25) > 0 && alpha(masked, 45, 25) < 255)
       assert.ok(alpha(masked, 10, 25) < alpha(masked, 45, 25))
